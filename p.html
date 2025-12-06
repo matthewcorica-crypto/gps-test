@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo + GPS Metadata</title>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; text-align: center; }
+    img { max-width: 100%; margin-top: 20px; }
+    pre { text-align: left; margin-top: 20px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+  <h2>Take a Photo</h2>
+
+  <input
+    type="file"
+    id="photoInput"
+    accept="image/*"
+    capture="environment"
+  >
+
+  <img id="preview" style="display:none;">
+  <pre id="exifData"></pre>
+
+  <script>
+    const fileInput = document.getElementById("photoInput");
+    const preview = document.getElementById("preview");
+    const exifOutput = document.getElementById("exifData");
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      // Display image on screen
+      const imgURL = URL.createObjectURL(file);
+      preview.src = imgURL;
+      preview.style.display = "block";
+
+      // Read EXIF metadata
+      EXIF.getData(file, function() {
+        const tags = EXIF.getAllTags(this);
+        let output = JSON.stringify(tags, null, 2);
+
+        // Check if GPS data exists
+        if (tags.GPSLatitude && tags.GPSLongitude) {
+          const toDec = (gps, ref) => {
+            const d = gps[0].numerator / gps[0].denominator;
+            const m = gps[1].numerator / gps[1].denominator;
+            const s = gps[2].numerator / gps[2].denominator;
+            let dec = d + m/60 + s/3600;
+            if (ref === "S" || ref === "W") dec = -dec;
+            return dec;
+          };
+
+          const lat = toDec(tags.GPSLatitude, tags.GPSLatitudeRef);
+          const lon = toDec(tags.GPSLongitude, tags.GPSLongitudeRef);
+
+          output += `\n\nGPS Coordinates:\nLat: ${lat}\nLon: ${lon}`;
+        } else {
+          output += `\n\nNo GPS data found in image metadata.`;
+        }
+
+        exifOutput.innerText = output;
+      });
+    });
+  </script>
+
+</body>
+</html>
