@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>High Accuracy Location</title>
+</head>
+<body>
+
+  <button onclick="getLocation()">Get Accurate Location</button>
+  <pre id="output"></pre>
+
+  <script>
+    function getLocation() {
+      const out = document.getElementById('output');
+
+      if (!navigator.geolocation) {
+        out.textContent = "Geolocation not supported";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy, altitude, speed } = pos.coords;
+
+          out.innerText =
+            `Lat: ${latitude}\n` +
+            `Lon: ${longitude}\n` +
+            `Accuracy: ±${accuracy} meters\n` +
+            `Altitude: ${altitude ?? "N/A"}\n` +
+            `Speed: ${speed ?? "N/A"}`;
+        },
+        (err) => {
+          out.textContent = "Error: " + err.message;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,   // waits longer for good signal
+          maximumAge: 0     // no cached location — fresh reading
+        }
+      );
+    }
+  </script>
+
+</body>
+</html>
